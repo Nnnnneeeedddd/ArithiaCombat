@@ -1,0 +1,20 @@
+name: ArithiaCombat
+main: com.arithia.combat.Combat
+version: 1
+commands:
+  fights:
+    description: use /fights help
+    usage: /fights <command> <command args>
+permissions:
+  arithiacombat.startfight:
+    description: permission to start a fight
+    default: op
+  arithiacombat.unfightable:
+    description: players can not fight with this person
+    default: op
+  arithiacombat.*:
+    description: gives access to startfights and is unfightable
+    default: op
+    children:
+      arithiacombat.startfight: true
+      arithiacombat.unfightable: true
