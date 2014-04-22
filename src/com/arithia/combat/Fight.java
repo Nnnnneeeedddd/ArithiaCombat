@@ -7,9 +7,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Player;
 
+import com.arithia.equipment.Armour;
 import com.arithia.equipment.Weapons;
 
 public class Fight {
+	private boolean won = false;
+	private Player winner;
 	private boolean fightStarted = false; // to allow fight verification
 	private int runID = 0; //id of runnable for verification
 	private Combat plugin;
@@ -84,23 +87,25 @@ public class Fight {
 	 * attempts to hit his opponent
 	 */
 	public void playerAttemptHit(Player attempter){
-		if(!fightStarted){
+		if(!fightStarted || won){
 			return;
 		}
 		
-		boolean hit = false;
+		boolean hit = true;
 		int chancesOfMiss = plugin.getConfig().getInt("chances.miss");
 		int randomNumber = Combat.rand.nextInt(100)+1;
 		
 		if(randomNumber < chancesOfMiss){
-			hit = true;
+			hit = false;
 		}
 		
 		/*
 		 * if player hits
 		 */
 		if(hit){
-			double damage = Weapons.getDamage(attempter.getItemInHand(), plugin);
+			double damageD = Weapons.getDamage(attempter.getItemInHand(), plugin);
+			damageD *= Armour.getDefence(attempter, plugin);
+			int damage = (int) Math.round(damageD);
 			Player opponent = getOpponent(attempter);
 			
 			Set<String> damages = plugin.getConfig().getConfigurationSection("messages.damages").getKeys(true);
@@ -115,7 +120,7 @@ public class Fight {
 				message = message.replace("{{opponent}}", opponent.getDisplayName());
 				
 				broadcast(message);
-				opponent.damage(damage);
+				opponent.damage(Double.valueOf(damage));
 			}else{
 				broadcast(ChatColor.RED+"ErrorInConfig: damage dealt: "+damage);
 			}
@@ -146,7 +151,7 @@ public class Fight {
 	 * attempts to flee
 	 */
 	public void playerAttemptFlee(Player attempter){
-		if(!fightStarted){
+		if(!fightStarted || won){
 			return;
 		}
 		
@@ -155,11 +160,11 @@ public class Fight {
 		
 		if(random < chancesOfFlee){
 			//flee success
-			attempter.sendMessage(ChatColor.GREEN+"[ArithiaCombat] Successfully Fled!!");
+			attempter.sendMessage(plugin.getConfig().getString("fleeMessages.success").replace("&", "§"));
 			closeWithoutMessage();
 		}else{
 			//flee fail
-			attempter.sendMessage(ChatColor.RED+"[ArithiaCombat] Flee failed");
+			attempter.sendMessage(plugin.getConfig().getString("fleeMessages.fail").replace("&", "§"));
 			attempter.teleport(getOpponent(attempter));
 		}
 		
@@ -174,13 +179,23 @@ public class Fight {
 	 * player (args0) is the player who died
 	 */
 	public void playerDeath(Player player){
-		closeWithoutMessage();
-		Player winner = getOpponent(player);
-		winner.sendMessage(ChatColor.GOLD+"You WIN!!!!!");
+		won = true;
+		winner = getOpponent(player);
+		
+		String winmessage = plugin.getConfig().getString("winMessages.winMessage");
+		String mercyMessage = plugin.getConfig().getString("winMessages.mercy");
+		String killMessage = plugin.getConfig().getString("winMessages.kill");
+		String enslaveMessage = plugin.getConfig().getString("winMessages.enslave");
+		winner.sendMessage(winmessage.replace("&", "§"));
+		winner.sendMessage(mercyMessage.replace("&", "§"));
+		winner.sendMessage(killMessage.replace("&", "§"));
+		winner.sendMessage(enslaveMessage.replace("&", "§"));
 	}
 	
 	
-	
+	public Player getWinner(){
+		return winner;
+	}
 	
 	/*
 	 * calls when player types 'yes' or 'no' into chat
@@ -198,7 +213,47 @@ public class Fight {
 		}
 	}
 	
+	/*
+	 * calls when player types "kill", "enslave" or "mercy" when the fight has been won
+	 */
+	public void possibleWinMessage(Player winner, String message){
+		Player loser = getOpponent(winner);
+		
+		if(loser.isDead()){
+			winner.sendMessage(ChatColor.YELLOW+"[ArithiaCombat] please wait for player to respawn");
+			return;
+		}
+		
+		if(message.equalsIgnoreCase("enslave")){
+			broadcast(
+					ChatColor.GOLD+winner.getDisplayName()+
+					ChatColor.GOLD+" has enslaved: "+loser.getDisplayName()
+			);
+			
+			plugin.enslavedPlayers.put(loser, winner);
+			plugin.enslavedPlayersTimer.put(loser, plugin.getConfig().getInt("enslavementTime"));
+			closeWithoutMessage();
+		}else if(message.equalsIgnoreCase("kill")){
+			broadcast(
+				ChatColor.GOLD+winner.getDisplayName()+ChatColor.GOLD+
+				" has killed: "+ loser.getDisplayName()
+			);
+			
+			plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "killchar "+loser.getName());
+			closeWithoutMessage();
+		}else{//player typed mercy
+			broadcast(
+					ChatColor.GOLD+winner.getDisplayName()+ChatColor.GOLD+
+					" has knocked out: "+ loser.getDisplayName()
+				);
+			loser.setHealth(0.0);
+			closeWithoutMessage();
+		}
+	}
 	
+	public boolean hasBeenWon(){
+		return won;
+	}
 	
 	/*
 	 * tests whether both players have appropriate permissions
@@ -325,10 +380,7 @@ public class Fight {
 	public void close(){
 		broadcast(ChatColor.DARK_RED+"Fight Closing");
 		player1.setMaxHealth(20.0);
-		player1.setHealth(20.0);
-		
 		player2.setMaxHealth(20.0);
-		player2.setHealth(20.0);
 		plugin.removeFight(this);
 	}
 }

@@ -1,8 +1,12 @@
 package com.arithia.combat;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -13,13 +17,15 @@ import com.arithia.listeners.PlayerListener;
 public class Combat extends JavaPlugin{
 	public static final Random rand = new Random();
 	private ArrayList<Player> pvpPlayers = new ArrayList<Player>();
+	public HashMap<Player, Player> enslavedPlayers = new HashMap<Player, Player>();
+	public HashMap<Player, Integer> enslavedPlayersTimer = new HashMap<Player, Integer>();
 	private ArrayList<Fight> fights = new ArrayList<Fight>();
 	
 	/*
-	 * CAVEAT AND TODO LIST
+	 * TODO AND CAVEAT LIST
 	 * 
-	 * Armour defence isn't finished
-	 * make it so pvp players are pvp players!!!
+	 * sort out enslaved players
+	 * add enslaved players timer
 	 * 
 	 */
 	
@@ -29,11 +35,7 @@ public class Combat extends JavaPlugin{
 		commands();
 		
 		Configuration.config(this);
-	}
-	
-	@Override
-	public void onDisable(){
-		//need to exit all fights here
+		startTimer();
 	}
 	
 	/*
@@ -93,6 +95,39 @@ public class Combat extends JavaPlugin{
 		}
 		
 		return null;
+	}
+	
+	public void startTimer(){
+		
+		getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable(){
+			@Override
+			public void run(){
+				for(Player player: getServer().getOnlinePlayers()){
+					if(enslavedPlayersTimer.containsKey(player)){
+						int time = enslavedPlayersTimer.get(player);
+						if(time == 0){
+							enslavedPlayersTimer.remove(player);
+							enslavedPlayers.remove(player);
+							player.sendMessage(ChatColor.GREEN+"[ArithiaCombat] You are free");
+						}else{
+							time--;
+							enslavedPlayersTimer.put(player, time);
+						}
+					}
+				}
+			}
+		}, 10L, 10L);
+		
+	}
+	
+	
+	public static <T, E> T getKeyByValue(Map<T, E> map, E value) {
+	    for (Entry<T, E> entry : map.entrySet()) {
+	        if (value.equals(entry.getValue())) {
+	            return entry.getKey();
+	        }
+	    }
+	    return null;
 	}
 	
 	/*

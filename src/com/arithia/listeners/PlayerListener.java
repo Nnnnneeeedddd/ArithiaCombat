@@ -37,6 +37,19 @@ public class PlayerListener implements Listener{
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent e){
 		
+		if(e.getMessage().equalsIgnoreCase("kill") ||
+				e.getMessage().equalsIgnoreCase("enslave") ||
+				e.getMessage().equalsIgnoreCase("mercy")){
+			
+			Fight fight = plugin.getFight(e.getPlayer());
+			if(fight.hasBeenWon()){
+				if(e.getPlayer() == fight.getWinner()){
+					fight.possibleWinMessage(e.getPlayer(), e.getMessage());
+					e.setCancelled(true);
+				}
+			}
+		}
+		
 		//if player types 'yes' or 'no'
 		if(e.getMessage().equalsIgnoreCase("yes") ||
 				e.getMessage().equalsIgnoreCase("no")){
@@ -71,6 +84,30 @@ public class PlayerListener implements Listener{
 	
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e){
+		if(plugin.enslavedPlayers.containsValue(e.getPlayer())){
+			Player winner = e.getPlayer();
+			Player loser = Combat.getKeyByValue(plugin.enslavedPlayers, winner);
+			
+			if(!winner.isOnline()){
+				plugin.enslavedPlayers.remove(loser);
+				plugin.enslavedPlayersTimer.remove(loser);
+			}
+			
+			int distance = (int)Math.round(
+					loser.getLocation().distance(
+							winner.getLocation()));
+			
+			if(distance > 5){
+				Location winnerL = winner.getLocation();
+				winnerL.setPitch(loser.getLocation().getPitch());
+				winnerL.setPitch(loser.getLocation().getYaw());
+				
+				loser.teleport(winnerL);
+			}	
+			
+			return;
+		}
+		
 		Fight fight = plugin.getFight(e.getPlayer());
 		
 		//if player is in a fight
@@ -84,9 +121,11 @@ public class PlayerListener implements Listener{
 						fight.getOpponent(player).getLocation()));
 				
 				if(distance > 3){
-					fight.getOpponent(player).teleport(player);
-					String message = plugin.getConfig().getString("notYourTurnMessage");
-					e.getPlayer().sendMessage(message.replace("&", "§"));
+					if(!fight.hasBeenWon()){
+						fight.getOpponent(player).teleport(player);
+						String message = plugin.getConfig().getString("notYourTurnMessage");
+						e.getPlayer().sendMessage(message.replace("&", "§"));
+					}
 				}
 			}
 			
@@ -117,6 +156,14 @@ public class PlayerListener implements Listener{
 			
 			Player player1 = (Player) e.getDamager();
 			Player player2 = (Player) e.getEntity();
+			
+			/*
+			 * if players are PVP players
+			 */
+			if(plugin.getPVPPlayers().contains(player1) ||
+					plugin.getPVPPlayers().contains(player2)){
+				return;
+			}
 			
 			/*
 			 * if both players are not in a fight

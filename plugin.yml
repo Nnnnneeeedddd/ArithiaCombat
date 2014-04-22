@@ -6,6 +6,12 @@ commands:
     description: use /fights help
     usage: /fights <command> <command args>
 permissions:
+  arithiacombat.exitcommand:
+    description: gives access to /fights exit command
+    default: op
+  arithiacombat.pvpcommand:
+    description: gives access to /fights pvp <player> command
+    default: op 
   arithiacombat.startfight:
     description: permission to start a fight
     default: op

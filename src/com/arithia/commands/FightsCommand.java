@@ -38,6 +38,11 @@ public class FightsCommand implements CommandExecutor{
 					return true;
 				}
 				
+				if(!s.hasPermission("arithiacombat.exitcommand")){
+					s.sendMessage(ChatColor.RED+"You do not have permission to perform this command");
+					return false;
+				}
+				
 				if(plugin.getFight((Player)s) != null){
 					plugin.getFight((Player) s).close();
 					s.sendMessage(ChatColor.RED+
@@ -46,6 +51,38 @@ public class FightsCommand implements CommandExecutor{
 					s.sendMessage(ChatColor.RED+
 							"[ArithiaCombat] Must be a player in a fight to perform this command");
 				}
+			}
+			
+			/*
+			 * releases a slave
+			 */
+			else if(args[0].equalsIgnoreCase("release")){
+				if(!(s instanceof Player)){
+					s.sendMessage("must be a player to perform this command");
+					return true;
+				}
+				
+				Player player = (Player) s;
+				
+				if(!plugin.enslavedPlayers.containsValue(player)){
+					player.sendMessage(ChatColor.RED+"[ArithiaCombat] You must have a slave to release");
+					return true;
+				}
+				
+				Player loser = null;
+				for(Player p : plugin.getServer().getOnlinePlayers()){
+					if(plugin.enslavedPlayers.containsKey(p)){
+						if(player == plugin.enslavedPlayers.get(p)){
+							loser = p;
+							break;
+						}
+					}
+				}
+				plugin.enslavedPlayers.remove(loser);
+				plugin.enslavedPlayersTimer.remove(loser);
+				
+				player.sendMessage(ChatColor.GREEN+"You released: "+loser.getDisplayName());
+				loser.sendMessage(ChatColor.GREEN+"You are released by: "+player.getDisplayName());
 			}
 			
 			/*
@@ -83,6 +120,8 @@ public class FightsCommand implements CommandExecutor{
 			else if(args[0].equalsIgnoreCase("help")){
 				s.sendMessage(ChatColor.GOLD+"/fights help: displays this message");
 				s.sendMessage(ChatColor.GOLD+"/fights exit: if player is in a fight, fight will be closed");
+				s.sendMessage(ChatColor.GOLD+"/fights pvp <player>: toggles normal pvp on or off for <player>");
+				s.sendMessage(ChatColor.GOLD+"/fights release <player>: if a player is enslaved it releases them");
 			}
 		}
 		

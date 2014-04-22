@@ -45,7 +45,14 @@ public class Configuration {
 				+ "in all messages {{player}} is the player who hit and {{opponent}} is the opponent\n"
 				+ "Chances------\n"
 				+ "percentages so if miss is 50 then hit is 50\n"
-				+ "do it is 50, 50 if miss is 60 then hit would be 40");
+				+ "do it is 50, 50 if miss is 60 then hit would be 40\n"
+				+ "ArmourDefense------\n"
+				+ "if the player is wearing full armour of one type E.g. Diamond\n"
+				+ "it will multiply any damage done by the value so the lower it is the more protective the armour\n"
+				+ "if you set it to one the armour will make no difference, if you set it to anything over one then\n"
+				+ "the player would be better off not wearing any armour"
+				+ "EnslavementTime--------\n"
+				+ "in seconds");
 		
 		config.options().copyHeader(true);
 		
@@ -54,6 +61,20 @@ public class Configuration {
 		config.addDefault("maxFightMessage", "&b[ArithiaCombat] Too many fights");
 		config.addDefault("notYourTurnMessage", "&c[ArithiaCombat] You can not take action; It is not your turn!");
 		config.addDefault("fleeDistance", 5);
+		
+		config.addDefault("winMessages.winMessage", "&6[ArithiaCombat] You WIN!!!!!");
+		config.addDefault("winMessages.kill", "&6[ArithiaCombat] type 'kill' to kill and delete players character");
+		config.addDefault("winMessages.enslave", "&6[ArithiaCombat] type 'enslave' to enslave the loser");
+		config.addDefault("winMessages.mercy", "&6[ArithiaCombat] type 'mercy' to be merciful and knock the player out (normal death)");
+		
+		config.addDefault("fleeMessages.success", "&6Successfully fled");
+		config.addDefault("fleeMessages.fail", "&cFlee failed");
+		
+		config.addDefault("enslavementTime", 2000);
+		
+		config.addDefault("deathLoc.x", 10);
+		config.addDefault("deathLoc.y", 10);
+		config.addDefault("deathLoc.z", 10);
 		
 		config.addDefault("weapons.diamond.hoe", 3);
 		config.addDefault("weapons.diamond.shovel", 3);
@@ -83,6 +104,11 @@ public class Configuration {
 		config.addDefault("weapons.fists", 1);
 		config.addDefault("weapons.bow", 3);
 		config.addDefault("weapons.shears", 5);
+		
+		config.addDefault("armour.fullDiamondArmor", 0.3);
+		config.addDefault("armour.fullGoldArmour", 0.5);
+		config.addDefault("armour.fullIronArmour", 0.6);
+		config.addDefault("armour.fullLeatherArmour", 0.8);
 		
 		config.addDefault("messages.damages.miss",
 				Arrays.asList("&c{{player}}&c trips over and misses the hit (dealt 0 damage)",
