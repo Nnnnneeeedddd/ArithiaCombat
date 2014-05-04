@@ -2,7 +2,6 @@ package com.arithia.equipment;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-
 import com.arithia.combat.Combat;
 
 public class Weapons {
@@ -46,7 +45,9 @@ public class Weapons {
 	public static double getDamage(ItemStack is, Combat plugin){
 		if(isWeapon(is)){
 			if(is == null || is.getType() == Material.AIR){
-				 return plugin.getConfig().getDouble("weapons.fists");
+				int from = plugin.getConfig().getInt("weapons.fists.damageFrom");
+				int to = plugin.getConfig().getInt("weapons.fists.damageTo");
+				return randomNumber(from, to);
 			}else{
 				String weapon = is.getType().toString();
 				
@@ -62,22 +63,28 @@ public class Weapons {
 						}
 					}
 					
-					if(weapon.equals(material+"_HOE")){
-						return plugin.getConfig().getDouble("weapons."+material.toLowerCase()+".hoe");
-					}else if(weapon.equals(material+"_SPADE")){
-						return plugin.getConfig().getDouble("weapons."+material.toLowerCase()+".shovel");
-					}else if(weapon.equals(material+"_AXE")){
-						return plugin.getConfig().getDouble("weapons."+material.toLowerCase()+".axe");
-					}else if(weapon.equals(material+"_SWORD")){
-						return plugin.getConfig().getDouble("weapons."+material.toLowerCase()+".sword");
-					}else{
-						return -1;
+					String[] weapons = {"_HOE", "_SPADE", "_AXE", "_SWORD"};
+					
+					for(String weaponT : weapons){
+						if(weapon.equals(material+weaponT)){
+							String weaponTLC = weaponT.toLowerCase().replace("_", "");
+							String path = "weapons."+material.toLowerCase()+"."+weaponTLC;
+							int from = plugin.getConfig().getInt(path+".damageFrom");
+							int to = plugin.getConfig().getInt(path+".damageTo");
+							return randomNumber(from, to);
+						}
 					}
+					
+					return -1;
 				}else{
 					if(weapon.equals("BOW")){
-						return plugin.getConfig().getDouble("weapons.bow");
+						int from = plugin.getConfig().getInt("weapons.bow.damageFrom");
+						int to = plugin.getConfig().getInt("weapons.bow.damageTo");
+						return randomNumber(from, to);
 					}else{
-						return plugin.getConfig().getDouble("weapons.shears");
+						int from = plugin.getConfig().getInt("weapons.shears.damageFrom");
+						int to = plugin.getConfig().getInt("weapons.shears.damageTo");
+						return randomNumber(from, to);
 					}
 				}
 			}
@@ -87,9 +94,82 @@ public class Weapons {
 	}
 	
 	/*
+	 * returns string array of [0] being weapon
+	 * and [1] being the material of the weapon
+	 */
+	public static String[] getWeaponAndMat(Material weaponM){
+		String weapon="";
+		String full = weaponM.toString();
+		String material="";
+		
+
+		if(weaponM == Material.AIR || weaponM == null){
+			//player using fists
+			weapon = "fists";
+			material = "";
+		}else{
+			if(full.contains("_")){
+				char[] weaponCA = full.toCharArray();
+				for(char c: weaponCA){
+					if(c != '_'){
+						material = material+c;
+					}else{
+						break;
+					}
+				}
+				
+				weapon = full.replace(material+"_", "").toLowerCase();
+				material = material.toLowerCase();
+			}else{
+				if(full.equals("BOW")){
+					weapon = "bow";
+					material = "";
+				}else{
+					weapon = "shears";
+					material = "";
+				}
+			}
+		}
+		
+		String[] wam = {weapon, material};
+		return wam;
+	}
+	
+//	/*
+//	 * returns the list of messages for a certain weapon
+//	 */
+//	public static List<String> getWeaponMessages(Material weapon, Combat plugin){
+//		String weaponS = weapon.toString();
+//		
+//		if(weaponS.contains("_")){
+//			
+//		}else{
+//			if(weaponS.equals("BOW")){
+//				return plugin.getConfig().getStringList("weapons.bow");
+//			}else{
+//				
+//			}
+//		}
+//	}
+	
+	/*
+	 * works out a random number
+	 * with a from and to value
+	 */
+	private static int randomNumber(int from, int to){
+		return Combat.rand.nextInt(to)+from;
+	}
+	
+	/*
 	 * works out is ItemStack args0 is a weapon
 	 */
 	public static boolean isWeapon(ItemStack is){
+		/*
+		 * player using fists
+		 */
+		if(is == null || is.getType() == Material.AIR){
+			return true;
+		}
 		
 		/*
 		 * player using weapon
@@ -98,13 +178,6 @@ public class Weapons {
 			if(is.getType() == mat){
 				return true;
 			}
-		}
-		
-		/*
-		 * player using fists
-		 */
-		if(is == null || is.getType() == Material.AIR){
-			return true;
 		}
 		
 		return false;

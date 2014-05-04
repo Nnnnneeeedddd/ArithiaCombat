@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Player;
 
@@ -77,7 +78,11 @@ public class Fight {
 		
 		setPlayersMaxHealth();
 		
-		playerAttemptHit(player1);
+		if(player1.getItemInHand().getType() == Material.BOW){
+			playerAttemptHit(player1, true);
+		}else{
+			playerAttemptHit(player1, false);
+		}
 	}
 	
 	
@@ -86,7 +91,7 @@ public class Fight {
 	 * called when a player of the correct turn
 	 * attempts to hit his opponent
 	 */
-	public void playerAttemptHit(Player attempter){
+	public void playerAttemptHit(Player attempter, boolean hitWithBow){
 		if(!fightStarted || won){
 			return;
 		}
@@ -103,15 +108,42 @@ public class Fight {
 		 * if player hits
 		 */
 		if(hit){
-			double damageD = Weapons.getDamage(attempter.getItemInHand(), plugin);
+			double damageD;
+			
+			if(hitWithBow){
+				damageD = Weapons.getDamage(null, plugin)+plugin.getConfig().getInt("weapons.bow.hit");
+			}else{
+				damageD = Weapons.getDamage(attempter.getItemInHand(), plugin);
+			}
+			
+			if(damageD == -1.0){
+				attempter.sendMessage(
+				ChatColor.RED+"[ArithiaCombat] You must be holding a weapon or using your fists");
+				return;
+			}
+			
 			damageD *= Armour.getDefence(attempter, plugin);
 			int damage = (int) Math.round(damageD);
 			Player opponent = getOpponent(attempter);
 			
-			Set<String> damages = plugin.getConfig().getConfigurationSection("messages.damages").getKeys(true);
+			String[] wm = Weapons.getWeaponAndMat(attempter.getItemInHand().getType());
+			
+			Set<String> damages = null;
+			if(wm[1].equals("")){
+				damages = plugin.getConfig().getConfigurationSection("weapons."+wm[0]+".messages").getKeys(true);
+			}else{
+				attempter.sendMessage("weapons."+wm[1]+"."+wm[0]+".messages");
+				damages = plugin.getConfig().getConfigurationSection("weapons."+wm[1]+"."+wm[0]+".messages").getKeys(true);
+			}
 			
 			if(damages.contains(String.valueOf(damage))){
-				List<String> messages = plugin.getConfig().getStringList("messages.damages."+damage);
+				List<String> messages=null;
+				if(wm[1] == ""){
+					messages = plugin.getConfig().getStringList("weapons."+wm[0]+".messages."+damage);
+				}else{
+					messages = plugin.getConfig().getStringList("weapons."+wm[1]+"."+wm[0]+".messages."+damage);
+				}
+				
 				int random = Combat.rand.nextInt(messages.size());
 				String message = messages.get(random);
 				
@@ -130,7 +162,15 @@ public class Fight {
 		 */
 		}else{
 			Player opponent = getOpponent(attempter);
-			List<String> messages = plugin.getConfig().getStringList("messages.damages.miss");
+			String[] wm = Weapons.getWeaponAndMat(attempter.getItemInHand().getType());
+			
+			List<String> messages=null;
+			if(wm[1].equals("")){
+				messages = plugin.getConfig().getStringList("weapons."+wm[0]+".messages.miss");
+			}else{
+				messages = plugin.getConfig().getStringList("weapons."+wm[1]+"."+wm[0]+".messages.miss");
+			}
+			
 			int random = Combat.rand.nextInt(messages.size());
 			String message = messages.get(random);
 			
@@ -366,10 +406,8 @@ public class Fight {
 	
 	public void closeWithoutMessage(){
 		player1.setMaxHealth(20.0);
-		player1.setHealth(20.0);
 		
 		player2.setMaxHealth(20.0);
-		player2.setHealth(20.0);
 		plugin.removeFight(this);
 	}
 	

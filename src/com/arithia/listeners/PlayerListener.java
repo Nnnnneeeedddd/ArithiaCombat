@@ -1,6 +1,8 @@
 package com.arithia.listeners;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -42,10 +44,14 @@ public class PlayerListener implements Listener{
 				e.getMessage().equalsIgnoreCase("mercy")){
 			
 			Fight fight = plugin.getFight(e.getPlayer());
-			if(fight.hasBeenWon()){
-				if(e.getPlayer() == fight.getWinner()){
-					fight.possibleWinMessage(e.getPlayer(), e.getMessage());
-					e.setCancelled(true);
+			
+			//player is in fight
+			if(fight != null){
+				if(fight.hasBeenWon()){
+					if(e.getPlayer() == fight.getWinner()){
+						fight.possibleWinMessage(e.getPlayer(), e.getMessage());
+						e.setCancelled(true);
+					}
 				}
 			}
 		}
@@ -151,11 +157,24 @@ public class PlayerListener implements Listener{
 	@EventHandler
 	public void onPlayerDamageEntity(EntityDamageByEntityEvent e){
 		//both entities must be players
-		if(e.getDamager() instanceof Player &&
+		
+		if((e.getDamager() instanceof Player &&
+				e.getEntity() instanceof Player) ||
+				e.getDamager() instanceof Arrow &&
 				e.getEntity() instanceof Player){
 			
-			Player player1 = (Player) e.getDamager();
+			
+			Player player1 = null;
 			Player player2 = (Player) e.getEntity();
+			
+			if(e.getDamager() instanceof Arrow){
+				Arrow arrow = (Arrow) e.getDamager();
+				if(arrow.getShooter() instanceof Player){
+					player1 = (Player) arrow.getShooter();
+				}
+			}else{
+				player1 = (Player) e.getDamager();
+			}
 			
 			/*
 			 * if players are PVP players
@@ -216,18 +235,31 @@ public class PlayerListener implements Listener{
 						 * if it is players turn
 						 */
 						else{
-							
-							fight.playerAttemptHit(player1);
-							e.setCancelled(true);
-							
-						}
-						
-					}
-					
+							if(e.getDamager() instanceof Player){
+								if(player1.getItemInHand().getType() == Material.BOW)
+									fight.playerAttemptHit(player1, true);
+								else
+									fight.playerAttemptHit(player1, false);
+							}else{
+								fight.playerAttemptHit(player1, false);
+							}
+							e.setCancelled(true);	
+						}	
+					}	
 				}
-				
 			}
-			
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+

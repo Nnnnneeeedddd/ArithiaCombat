@@ -97,7 +97,17 @@ public class FightsCommand implements CommandExecutor{
 					}
 					
 					String playerSTR = args[1];
-					Player player = Bukkit.getPlayer(playerSTR);
+					Player player=null;
+					for(Player player1: Bukkit.getOnlinePlayers()){
+						if(player1.getName().equalsIgnoreCase(playerSTR)){
+							player = player1;
+						}
+					}
+					
+					if(player == null){
+						s.sendMessage(ChatColor.RED+"[ArithiaCombat] Player "+playerSTR+" not online!!");
+					}
+					
 					if(plugin.getFight(player) != null){
 						s.sendMessage(ChatColor.RED+"[ArithiaCombat] this player is in a fight");
 						return true;

@@ -50,9 +50,13 @@ public class Configuration {
 				+ "if the player is wearing full armour of one type E.g. Diamond\n"
 				+ "it will multiply any damage done by the value so the lower it is the more protective the armour\n"
 				+ "if you set it to one the armour will make no difference, if you set it to anything over one then\n"
-				+ "the player would be better off not wearing any armour"
+				+ "the player would be better off not wearing any armour\n"
 				+ "EnslavementTime--------\n"
-				+ "in seconds");
+				+ "in seconds\n"
+				+ "BOWS-------\n"
+				+ "In the bow there is a \"hit: \" value\n"
+				+ "this is how much will be added to fist damage if you are holding a bow\n"
+				+ "IMPORTANT: the bow must have damage values that is 'weapons.bow.hit' higher then the highest fist value");
 		
 		config.options().copyHeader(true);
 		
@@ -72,61 +76,42 @@ public class Configuration {
 		
 		config.addDefault("enslavementTime", 2000);
 		
-		config.addDefault("deathLoc.x", 10);
-		config.addDefault("deathLoc.y", 10);
-		config.addDefault("deathLoc.z", 10);
 		
-		config.addDefault("weapons.diamond.hoe", 3);
-		config.addDefault("weapons.diamond.shovel", 3);
-		config.addDefault("weapons.diamond.axe", 5);
-		config.addDefault("weapons.diamond.sword", 6);
+		String[] materials = {"diamond", "gold", "iron", "stone", "wood"};
+		String[] weapons = {"hoe", "shovel", "axe", "sword"};
 		
-		config.addDefault("weapons.gold.hoe", 2);
-		config.addDefault("weapons.gold.shovel", 3);
-		config.addDefault("weapons.gold.axe", 4);
-		config.addDefault("weapons.gold.sword", 4);
+		for(String material : materials){
+			for(String weapon: weapons){
+				String path = "weapons."+material+"."+weapon+".";
+				config.addDefault(path+"damageFrom", 1);
+				config.addDefault(path+"damageTo", 3);
+				config.addDefault(path+"messages.miss", Arrays.asList("Messages for when player misses with this weapon"));
+				config.addDefault(path+"messages.1", Arrays.asList("messages for damage 1 for weapon: "+weapon));
+				config.addDefault(path+"messages.2", Arrays.asList("messages for damage 2 for weapon: "+weapon));
+				config.addDefault(path+"messages.3", Arrays.asList("messages for damage 3 for weapon: "+weapon));
+			}
+		}
 		
-		config.addDefault("weapons.iron.hoe", 2);
-		config.addDefault("weapons.iron.shovel", 2);
-		config.addDefault("weapons.iron.axe", 3);
-		config.addDefault("weapons.iron.sword", 4);
+		String[] weaponsWithoutMaterials = {"fists", "bow", "shears"};
 		
-		config.addDefault("weapons.stone.hoe", 1);
-		config.addDefault("weapons.stone.shovel", 1);
-		config.addDefault("weapons.stone.axe", 2);
-		config.addDefault("weapons.stone.sword", 3);
-		
-		config.addDefault("weapons.wood.hoe", 1);
-		config.addDefault("weapons.wood.shovel", 1);
-		config.addDefault("weapons.wood.axe", 1);
-		config.addDefault("weapons.wood.sword", 2);
-		
-		config.addDefault("weapons.fists", 1);
-		config.addDefault("weapons.bow", 3);
-		config.addDefault("weapons.shears", 5);
+		for(String weapon : weaponsWithoutMaterials){
+			config.addDefault("weapons."+weapon+".damageFrom", 1);
+			config.addDefault("weapons."+weapon+".damageTo", 3);
+			config.addDefault("weapons."+weapon+".messages.miss", Arrays.asList("Messages for when player misses with this weapon"));
+			config.addDefault("weapons."+weapon+".messages.1", Arrays.asList("messages for damage 1 for weapon: "+weapon));
+			config.addDefault("weapons."+weapon+".messages.2", Arrays.asList("messages for damage 2 for weapon: "+weapon));
+			config.addDefault("weapons."+weapon+".messages.3", Arrays.asList("messages for damage 3 for weapon: "+weapon));
+			if(weapon.equals("bow")){
+				plugin.getConfig().addDefault("weapons.bow.messages.4", "THIS MESSAGE IS ESSENTIAL because it is one"
+						+ " higher then 3 (the highest fist value)");
+				plugin.getConfig().addDefault("weapons.bow.hit", 1);
+			}
+		}
 		
 		config.addDefault("armour.fullDiamondArmor", 0.3);
 		config.addDefault("armour.fullGoldArmour", 0.5);
 		config.addDefault("armour.fullIronArmour", 0.6);
 		config.addDefault("armour.fullLeatherArmour", 0.8);
-		
-		config.addDefault("messages.damages.miss",
-				Arrays.asList("&c{{player}}&c trips over and misses the hit (dealt 0 damage)",
-				"&c{{player}}&c's weapon is obviously too heavy for him, he missed (dealt 0 damage)",
-				"&c{{player}}&c's opponent blocks the attack (dealt 0 damage)"));
-		
-		config.addDefault("messages.damages.1", Arrays.asList("&b{{player}}&b Hits player really hard... on the foot (dealt 1 damage)",
-				"&a{{player}} lashes out and gently hits the player?? (dealt 1 damage)"));
-		
-		config.addDefault("messages.damages.2", Arrays.asList("&1{{player}} cuts {{opponent}}&1's knee (dealt 2 damage)"));
-		
-		config.addDefault("messages.damages.3", Arrays.asList("&1{{player}} dislocates opponents hand (dealt 3 damage)"));
-		
-		config.addDefault("messages.damages.4", Arrays.asList("&1{{player}} cuts {{opponent}}&1 arm clean off (dealt 4 damage)"));
-		
-		config.addDefault("messages.damages.5", Arrays.asList("&1{{player}} mutilates the players face (dealt 5 damage)"));
-		
-		config.addDefault("messages.damages.6", Arrays.asList("&1{{player}} smacks player round the head hard (dealt 6 damage)"));
 		
 		config.addDefault("chances.miss", 30);
 		config.addDefault("chances.flee", 60);
